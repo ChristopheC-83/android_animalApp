@@ -1,11 +1,8 @@
 package com.compagnon2code.animal_app.ui
 
-import android.util.Log
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
@@ -13,13 +10,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
-import androidx.compose.ui.Modifier
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.compagnon2code.animal_app.data.Animal
 import com.compagnon2code.animal_app.data.getAnimalList
 import com.compagnon2code.animal_app.ui.screens.AnimalAddScreen
 import com.compagnon2code.animal_app.ui.screens.AnimalDetailScreen
@@ -27,237 +26,147 @@ import com.compagnon2code.animal_app.ui.screens.AnimalListScreen
 import com.compagnon2code.animal_app.ui.screens.AnimalUpdateScreen
 import com.compagnon2code.animal_app.widget.ConfirmationDialog
 
-//sealed class Screen {
-//
-//    object AnimalList : Screen()
-//    object AnimalAdd : Screen()
-//    class AnimalUpdate(val animalId: Int) : Screen()
-//    class AnimalDetail(val animalId: Int) : Screen()
-//}
+sealed class AnimalRoute(val route: String) {
 
-enum class AnimalScreen {
-    AnimalList,
-    AnimalAdd,
-    AnimalDetail,
-    AnimalUpdate
+    object List : AnimalRoute("animal_list")
+    object Add : AnimalRoute("animal_add")
+    object Detail : AnimalRoute("animal_detail/{animalId}") {
+        fun createRoute(id: Int) = "animal_detail/$id"
+    }
+    object Update : AnimalRoute("animal_update/{animalId}") {
+        fun createRoute(id: Int) = "animal_update/$id"
+    }
+}
+
+object NavTransitions {
+
+    private val duration = 400
+
+    val enter = slideInHorizontally(
+        initialOffsetX = { it },
+        animationSpec = tween(duration)
+    ) + fadeIn(tween(duration))
+
+    val exit = slideOutHorizontally(
+        targetOffsetX = { -it },
+        animationSpec = tween(duration)
+    ) + fadeOut(tween(duration))
+
+    val popEnter = slideInHorizontally(
+        initialOffsetX = { -it },
+        animationSpec = tween(duration)
+    ) + fadeIn(tween(duration))
+
+    val popExit = slideOutHorizontally(
+        targetOffsetX = { it },
+        animationSpec = tween(duration)
+    ) + fadeOut(tween(duration))
 }
 
 @Composable
-fun AnimalApp(
-    modifier: Modifier = Modifier
+fun AnimalNavGraph(
+    navController: NavHostController,
+    animals: SnapshotStateList<Animal>,
+    onDelete: (Int) -> Unit
 ) {
-    var navController = rememberNavController()
-
-    var animals by remember { mutableStateOf(getAnimalList().toMutableStateList()) }
-
-//    var stateCurrentScreen by remember { mutableStateOf<Screen>(Screen.AnimalList) }
-
-    var stateShowDialog by remember { mutableStateOf(false) }
-
-    var stateAnimalToDelete by remember { mutableStateOf(0) }
-
-    if (stateShowDialog) {
-        ConfirmationDialog(
-            title = "Delete ?",
-            text = "Delete this animal ?",
-            onDismiss = { stateShowDialog = false },
-            onConfirm = {
-                animals.removeIf { animal -> animal.id == stateAnimalToDelete }
-                stateShowDialog = false
-            },
-        )
-    }
-
     NavHost(
         navController = navController,
-        startDestination = AnimalScreen.AnimalList.name, // name pour avoir String
+        startDestination = AnimalRoute.List.route,
+        enterTransition = { NavTransitions.enter },
+        exitTransition = { NavTransitions.exit },
+        popEnterTransition = { NavTransitions.popEnter },
+        popExitTransition = { NavTransitions.popExit },
+    ) {
 
-        //  Pour une transition entre les pages
-        enterTransition = {
-            slideInHorizontally(
-                initialOffsetX = { -it },
-                animationSpec = tween(500)
-            ) +
-                    fadeIn(animationSpec = tween(500)) +
-                    scaleIn(initialScale = 0.8f, animationSpec = tween(500))
-        },
-        exitTransition = {
-            slideOutHorizontally(
-                targetOffsetX = { -it },
-                animationSpec = tween(500)
-            ) +
-                    fadeOut(animationSpec = tween(500)) +
-                    scaleOut(targetScale = 0.8f, animationSpec = tween(500))
-        },
-        popEnterTransition = {
-            slideInHorizontally(
-                initialOffsetX = { -it },
-                animationSpec = tween(500)
-            ) +
-                    fadeIn(animationSpec = tween(500)) +
-                    scaleIn(initialScale = 0.8f, animationSpec = tween(500))
-        },
-        popExitTransition = {
-            slideOutHorizontally(
-                targetOffsetX = { -it },
-                animationSpec = tween(500)
-            ) +
-                    fadeOut(animationSpec = tween(500)) +
-                    scaleOut(targetScale = 0.8f, animationSpec = tween(500))
-        },
-
-        ) {
-
-        composable(
-            route = AnimalScreen.AnimalList.name
-        ) {
+        composable(AnimalRoute.List.route) {
             AnimalListScreen(
                 animals = animals,
                 onAnimalClick = { id ->
-                    navController.navigate(AnimalScreen.AnimalDetail.name + "/$id")
+                    navController.navigate(AnimalRoute.Detail.createRoute(id))
                 },
-                onDelete = { id ->
-                    stateAnimalToDelete = id
-                    stateShowDialog = true
-                },
-                onAdd = { navController.navigate(route = AnimalScreen.AnimalAdd.name) }
+                onDelete = onDelete,
+                onAdd = { navController.navigate(AnimalRoute.Add.route) }
             )
         }
 
-        composable(
-            route = AnimalScreen.AnimalAdd.name
-        ) {
+        composable(AnimalRoute.Add.route) {
             AnimalAddScreen(
-                onSave = { animalToAdd ->
-                    animals.add(animalToAdd)
+                onSave = {
+                    animals.add(it)
                     navController.popBackStack()
                 },
-                onCancel = {
-                    navController.popBackStack()
-                },
-                onBack = {
-                    navController.popBackStack()
+                onCancel = { navController.popBackStack() },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            AnimalRoute.Detail.route,
+            arguments = listOf(navArgument("animalId") { type = NavType.IntType })
+        ) { entry ->
+            val id = entry.arguments!!.getInt("animalId")
+            val animal = animals.find { it.id == id } ?: return@composable
+
+            AnimalDetailScreen(
+                animal = animal,
+                onBack = { navController.popBackStack() },
+                onUpdate = {
+                    navController.navigate(AnimalRoute.Update.createRoute(id))
                 }
             )
         }
 
-
         composable(
-            route = AnimalScreen.AnimalDetail.name + "/{animalId}",
-            arguments = listOf(navArgument(name = "animalId") { type = NavType.IntType })
-        ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getInt("animalId")
-            animals.find { it.id == id }?.let {
-                AnimalDetailScreen(
-                    animal = it,
-                    onBack = {
-                        navController.popBackStack()
-                    },
-                    onUpdate = {
-                        navController.navigate(route = AnimalScreen.AnimalUpdate.name + "/${id}")
-                    },
-                )
-            }
-        }
+            AnimalRoute.Update.route,
+            arguments = listOf(navArgument("animalId") { type = NavType.IntType })
+        ) { entry ->
+            val id = entry.arguments!!.getInt("animalId")
+            val animal = animals.find { it.id == id } ?: return@composable
 
-        composable(
-            route = AnimalScreen.AnimalUpdate.name + "/{animalId}",
-            arguments = listOf(navArgument(name = "animalId") { type = NavType.IntType })
-        ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getInt("animalId")
             AnimalUpdateScreen(
-                animal = animals.find { it.id == id },
-                onSave = { updatedAnimal ->
-                    val index = animals.indexOfFirst { it.id == updatedAnimal.id }
-                    if (index != -1) {
-                        animals[index] = updatedAnimal
-                    }
-                    navController.popBackStack(
-                        route = AnimalScreen.AnimalList.name,
-                        inclusive = false
-                    )
-
+                animal = animal,
+                onSave = { updated ->
+                    val index = animals.indexOfFirst { it.id == updated.id }
+                    if (index != -1) animals[index] = updated
+                    navController.popBackStack(AnimalRoute.List.route, false)
                 },
-//                 retour à l'écran precedent
                 onCancel = { navController.popBackStack() },
-//                 retour à un écran ciblé
                 onBack = {
-                    navController.popBackStack(
-                        route = AnimalScreen.AnimalList.name,
-                        inclusive = false
-                    )
+                    navController.popBackStack(AnimalRoute.List.route, false)
                 }
-
             )
         }
     }
+}
 
-//    when (val screen = stateCurrentScreen) {
-//        is Screen.AnimalList -> {
-//            AnimalListScreen(
-//                animals = animals,
-//                onAnimalClick = { stateCurrentScreen = AnimalDetail(it) },
-//                onDelete = { id ->
-//                    // sans confirmation
-//                    // animals.removeIf { animal -> animal.id == id }
-//                    // avec boite de dialog
-//                    stateAnimalToDelete = id
-//                    stateShowDialog = true
-//
-//                },
-//                onAdd = { stateCurrentScreen = Screen.AnimalAdd }
-//            )
-//        }
-//
-//        is Screen.AnimalDetail -> {
-//            animals.find { it.id == screen.animalId }?.let {
-//                AnimalDetailScreen(
-//                    animal = it,
-//                    onBack = {
-//                        stateCurrentScreen = Screen.AnimalList
-//                    },
-//                    onUpdate = {
-//                        stateCurrentScreen = AnimalUpdate(it.id) //??? it seul ?
-//                    },
-//                )
-//            }
-//        }
-//
-//        is Screen.AnimalAdd -> {
-//            AnimalAddScreen(
-//                // version de base avec kotlin
-//                // onSave = {animals.add(it)},
-//                // version  lisible
-//                onSave = { animalToAdd ->
-//                    animals.add(animalToAdd)
-//                    stateCurrentScreen = Screen.AnimalList
-//                },
-//                onCancel = {
-//                    stateCurrentScreen = Screen.AnimalList
-//                },
-//                onBack = {
-//                    stateCurrentScreen = Screen.AnimalList
-//                }
-//            )
-//        }
-//
-//        is Screen.AnimalUpdate -> {
-//            animals.find { it.id == screen.animalId }?.let {
-//                AnimalUpdateScreen(
-//                    animal = it,
-//                    onSave = { updatedAnimal ->
-//                        val index = animals.indexOfFirst { it.id == updatedAnimal.id }
-//                        if (index != -1) {
-//                            animals[index] = updatedAnimal
-//                        }
-//                        stateCurrentScreen = Screen.AnimalList
-//                    },
-//                    onCancel = { stateCurrentScreen = Screen.AnimalList },
-//                    onBack = { stateCurrentScreen = Screen.AnimalList }
-//
-//                )
-//
-//            }
-//        }
-//    }
+
+
+@Composable
+fun AnimalApp() {
+    val navController = rememberNavController()
+    val animals = remember { getAnimalList().toMutableStateList() }
+
+    var showDialog by remember { mutableStateOf(false) }
+    var animalToDelete by remember { mutableStateOf<Int?>(null) }
+
+    if (showDialog && animalToDelete != null) {
+        ConfirmationDialog(
+            title = "Delete ?",
+            text = "Delete this animal ?",
+            onDismiss = { showDialog = false },
+            onConfirm = {
+                animals.removeIf { it.id == animalToDelete }
+                showDialog = false
+            }
+        )
+    }
+
+    AnimalNavGraph(
+        navController = navController,
+        animals = animals,
+        onDelete = {
+            animalToDelete = it
+            showDialog = true
+        }
+    )
 }
