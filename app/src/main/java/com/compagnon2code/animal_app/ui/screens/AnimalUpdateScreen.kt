@@ -27,7 +27,6 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,7 +40,7 @@ import com.compagnon2code.animal_app.ui.theme.Animal_AppTheme
 @Composable
 fun AnimalUpdateScreen(
     modifier: Modifier = Modifier,
-    animal: Animal,
+    animal: Animal?,
     onSave: (Animal) -> Unit,
     onCancel: () -> Unit,
     onBack: () -> Unit,
@@ -53,7 +52,7 @@ fun AnimalUpdateScreen(
         val state: MutableState<String>,
         val required: Boolean = false
     )
-
+    if (animal == null) return
     // Déclare tous tes states dans un tableau
     val fields = listOf(
         FormField("name", "Name", remember { mutableStateOf(animal.name) }, required = true),
