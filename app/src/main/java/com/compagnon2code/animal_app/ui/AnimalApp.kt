@@ -1,5 +1,13 @@
 package com.compagnon2code.animal_app.ui
 
+import android.util.Log
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -62,8 +70,43 @@ fun AnimalApp(
 
     NavHost(
         navController = navController,
-        startDestination = AnimalScreen.AnimalList.name // name pour avoir String
-    ) {
+        startDestination = AnimalScreen.AnimalList.name, // name pour avoir String
+
+        //  Pour une transition entre les pages
+        enterTransition = {
+            slideInHorizontally(
+                initialOffsetX = { -it },
+                animationSpec = tween(500)
+            ) +
+                    fadeIn(animationSpec = tween(500)) +
+                    scaleIn(initialScale = 0.8f, animationSpec = tween(500))
+        },
+        exitTransition = {
+            slideOutHorizontally(
+                targetOffsetX = { -it },
+                animationSpec = tween(500)
+            ) +
+                    fadeOut(animationSpec = tween(500)) +
+                    scaleOut(targetScale = 0.8f, animationSpec = tween(500))
+        },
+        popEnterTransition = {
+            slideInHorizontally(
+                initialOffsetX = { -it },
+                animationSpec = tween(500)
+            ) +
+                    fadeIn(animationSpec = tween(500)) +
+                    scaleIn(initialScale = 0.8f, animationSpec = tween(500))
+        },
+        popExitTransition = {
+            slideOutHorizontally(
+                targetOffsetX = { -it },
+                animationSpec = tween(500)
+            ) +
+                    fadeOut(animationSpec = tween(500)) +
+                    scaleOut(targetScale = 0.8f, animationSpec = tween(500))
+        },
+
+        ) {
 
         composable(
             route = AnimalScreen.AnimalList.name
