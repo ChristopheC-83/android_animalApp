@@ -79,7 +79,8 @@ fun AnimalListScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(MaterialTheme.shapes.medium)
-                            .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+//                            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                        ,
                         contentAlignment = Alignment.Center,
 
                         ) {
