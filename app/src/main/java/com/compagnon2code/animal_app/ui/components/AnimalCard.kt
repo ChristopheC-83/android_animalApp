@@ -15,7 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.compagnon2code.animal_app.data.Animal
+import com.compagnon2code.animal_app.model.Animal
 
 
 @Composable

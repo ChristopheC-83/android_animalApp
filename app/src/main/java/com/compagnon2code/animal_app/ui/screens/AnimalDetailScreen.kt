@@ -26,8 +26,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.compagnon2code.animal_app.data.Animal
-import com.compagnon2code.animal_app.data.getAnimalList
+import com.compagnon2code.animal_app.model.Animal
+import com.compagnon2code.animal_app.model.getAnimalList
 import com.compagnon2code.animal_app.ui.theme.Animal_AppTheme
 
 @OptIn(ExperimentalMaterial3Api::class)

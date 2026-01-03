@@ -18,8 +18,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.compagnon2code.animal_app.data.Animal
-import com.compagnon2code.animal_app.data.getAnimalList
+import com.compagnon2code.animal_app.model.Animal
+import com.compagnon2code.animal_app.model.getAnimalList
 import com.compagnon2code.animal_app.ui.screens.AnimalAddScreen
 import com.compagnon2code.animal_app.ui.screens.AnimalDetailScreen
 import com.compagnon2code.animal_app.ui.screens.AnimalListScreen

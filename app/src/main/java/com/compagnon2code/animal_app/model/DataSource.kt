@@ -1,7 +1,11 @@
-package com.compagnon2code.animal_app.data
+package com.compagnon2code.animal_app.model
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 
+@Entity(tableName = "tblAnimal")
 data class Animal(
-    val id: Int,
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,  // valeur par défaut qui sera écrasée
     val name: String,
     val gender: String,
     val species: String,
